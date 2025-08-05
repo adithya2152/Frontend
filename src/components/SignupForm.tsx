@@ -13,7 +13,8 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
  
-const API_BASE_URL = "http://localhost:3001/api";
+// const API_BASE_URL = "http://localhost:3001/api";
+const API_BASE_URL = `${import.meta.env.API_URL}/api`;
 
 interface SignupFormProps {
   onToggleMode: () => void;

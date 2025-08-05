@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Search, Trophy, Medal, Award, FileText, HeartPulse, ShieldCheck, Truck, Star, Smile, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+// const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = `${import.meta.env.API_URL}/api`;
 
 // TypeScript interfaces
 interface Badge {
