@@ -131,12 +131,11 @@ export function Dashboard({ onNavigate }: DashboardProps) {
             ]);
 
             console.log('Driver response:', driverRes.data); // Debug log
-            console.log('Trips response:', tripsRes.data); // Debug log
-            console.log('Vehicles response:', vehiclesRes.data);
-             // Debug log
+            console.log('Trips response:', tripsRes.data.data); // Debug log
+            console.log('Vehicles response:', vehiclesRes.data.data); // Debug log
             setDrivers(Array.isArray(driverRes.data) ? driverRes.data : [driverRes.data]);
-            setVehicles(Array.isArray(vehiclesRes.data) ? vehiclesRes.data : [vehiclesRes.data]);
-            setTrips(Array.isArray(tripsRes.data) ? tripsRes.data : [tripsRes.data]);
+            setVehicles(Array.isArray(vehiclesRes.data.data) ? vehiclesRes.data.data : [vehiclesRes.data.data]);
+            setTrips(Array.isArray(tripsRes.data.data) ? tripsRes.data.data : [tripsRes.data.data]);
           } catch (err: any) {
             console.error('Driver data fetch error:', err);
             if (err.response) {
@@ -160,7 +159,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     fetchData();
   }, [user?.id, isManager]);
 
-  const userTrips = isManager ? trips : trips.filter(trip => trip.driver_id === Number(user?.id));
+  const userTrips = isManager ? trips : trips.filter(trip => trip.driver_username === user?.username);
 
   const stats = {
     totalDrivers: drivers.length,

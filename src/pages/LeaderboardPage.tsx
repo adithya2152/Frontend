@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Search, Trophy, Medal, Award, FileText, HeartPulse, ShieldCheck, Truck, Star, Smile, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-// const API_BASE_URL = 'http://localhost:3001/api';
-const API_BASE_URL = `${import.meta.env.API_URL}/api`;
+const API_BASE_URL = 'http://localhost:3001/api';
+// const API_BASE_URL = `${import.meta.env.API_URL}/api`;
 
 // TypeScript interfaces
 interface Badge {
@@ -40,9 +40,9 @@ const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ onNavigate }) => {
   useEffect(() => {
     if (user) {
       if (user.role === 'manager') {
-        fetchLeaderboard(user.id.toString());
+        fetchLeaderboard(user.username);
       } else if (user.role === 'driver') {
-        fetchDriverLeaderboard(user.id.toString());
+        fetchDriverLeaderboard(user.username);
       }
     }
   }, [user]);
@@ -54,12 +54,13 @@ const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ onNavigate }) => {
     setFilteredDrivers(filtered);
   }, [drivers, searchTerm]);
 
-  const fetchLeaderboard = async (managerId?: string) => {
+  const fetchLeaderboard = async (manager_username?: string) => {
     setLoading(true);
     try {
-      const url = managerId
-        ? `${API_BASE_URL}/leaderboard/${managerId}`
+      const url = manager_username
+        ? `${API_BASE_URL}/leaderboard/${manager_username}`
         : `${API_BASE_URL}/leaderboard`;
+      console.log("Fetching from URL:", url); // <-- ADD THIS LINE
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch leaderboard');
       const data = await response.json();

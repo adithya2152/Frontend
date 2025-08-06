@@ -459,7 +459,7 @@ export function DriversPage({ action }) {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredDrivers.map((driver, index) => (
           <div
-            key={driver.driver_id}
+            key={index}
             className="bg-white rounded-2xl shadow-lg border border-orange-100 hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-fadeIn"
             style={{ animationDelay: `${index * 100}ms` }}
           >

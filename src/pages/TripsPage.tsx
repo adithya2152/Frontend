@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Trip } from '../types';
 import api from '../services/api';
 import { useSearchParams } from 'react-router-dom';
-
+import { toast } from 'react-toastify';
 
 interface TripFormProps {
   editingTrip: Trip | null;
@@ -50,22 +50,22 @@ const TripForm: React.FC<TripFormProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Driver Select */}
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-700">Driver</label>
-          <select
-            name="driver_id"
-            value={formData.driver_id}
-            onChange={handleInputChange}
-            className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-gray-50 focus:bg-white"
-            required
-          >
-            <option value="">Select a driver</option>
-            {drivers.map((driver) => (
-              <option key={driver.driver_id} value={driver.driver_id}>
-                {`${driver.first_name} ${driver.last_name}`}
-              </option>
-            ))}
-          </select>
-        </div>
+  <label className="block text-sm font-semibold text-gray-700">Driver</label>
+  <select
+    name="driver_username"  
+    value={formData.driver_username}  
+    onChange={handleInputChange}
+    className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-gray-50 focus:bg-white"
+    required
+  >
+    <option value="">Select a driver</option>
+    {drivers.map((driver) => (
+      <option key={driver.username} value={driver.username}>  
+        {`${driver.username}`}
+      </option>
+    ))}
+  </select>
+</div>
 
         {/* Vehicle Select */}
         <div className="space-y-2">
@@ -291,8 +291,8 @@ export function TripsPage({ action }) {
   // Move formData state outside of any effects or callbacks
   const [formData, setFormData] = useState({
     vehicle_id: '',
-    driver_id: '',
-    manager_id: user?.id || '',
+    driver_username: '',
+    manager_username: user?.username || '',
     start_time: '',
     end_time: '',
     start_location: '',
@@ -337,7 +337,7 @@ export function TripsPage({ action }) {
 
     try {
       // Validate required fields
-      const requiredFields = ['vehicle_id', 'driver_id', 'start_time', 'start_location', 'end_location'];
+      const requiredFields = ['vehicle_id', 'driver_username', 'start_time', 'start_location', 'end_location'];
       const missingFields = requiredFields.filter(field => !formData[field]);
       if (missingFields.length > 0) {
         throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
@@ -346,8 +346,8 @@ export function TripsPage({ action }) {
       // Format data to match database schema
       const submissionData = {
         vehicle_id: parseInt(formData.vehicle_id),
-        driver_id: parseInt(formData.driver_id),
-        manager_id: parseInt(user?.id as string),
+        driver_username: formData.driver_username,
+        manager_username: user?.username as string,
         start_time: new Date(formData.start_time).toISOString(),
         end_time: formData.end_time ? new Date(formData.end_time).toISOString() : null,
         start_location: formData.start_location,
@@ -358,17 +358,25 @@ export function TripsPage({ action }) {
         min_speed: formData.min_speed ? parseFloat(formData.min_speed) : null,
         fuel_consumed: formData.fuel_consumed ? parseFloat(formData.fuel_consumed) : null,
         harsh_events_count: parseInt(formData.harsh_events_count) || 0,
-        trip_status: formData.trip_status // <-- Use selected status
+        trip_status: formData.trip_status  
       };
 
       if (editingTrip) {
-        await api.put(`/trips/updateTrip/${editingTrip.trip_id}`, {
+        await api.put(`/trips/${editingTrip.trip_id}`, {
           ...submissionData,
           trip_id: editingTrip.trip_id
         }, { headers });
       } else {
         const response = await api.post('/trips/', submissionData, { headers });
-        console.log('Trip created:', response.data);
+        if(response.status == 201)
+        {
+          toast.success('Trip scheduled successfully!');
+          resetForm();
+        }
+        else
+        {
+          toast.error(`Failed to schedule trip: ${response.data?.message || 'Unknown error'}`);
+        }
       }
 
       await fetchTrips();
@@ -377,6 +385,8 @@ export function TripsPage({ action }) {
     } catch (err: any) {
       console.error('Trip submission error:', err);
       alert(err.response?.data?.error || err.message || 'Failed to save trip');
+       const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || 'An unknown error occurred';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -389,8 +399,9 @@ export function TripsPage({ action }) {
         await api.delete(`/trips/${id}`);
         await fetchTrips();
       } catch (err: any) {
+        const errorMessage = err.response?.data?.error || 'Failed to delete trip';
+        toast.error(errorMessage);
         console.error('Failed to delete trip:', err);
-        alert(err.response?.data?.error || 'Failed to delete trip');
       }
     }
   };
@@ -399,8 +410,8 @@ export function TripsPage({ action }) {
     setEditingTrip(trip);
     setFormData({
       vehicle_id: trip.vehicle_id.toString(),
-      driver_id: trip.driver_id.toString(),
-      manager_id: user?.id || '',
+      driver_username: trip.driver_username || '',
+      manager_username: user?.username || '',
       start_time: new Date(trip.start_time).toISOString().slice(0, 16), // Format for datetime-local input
       end_time: trip.end_time ? new Date(trip.end_time).toISOString().slice(0, 16) : '',
       start_location: trip.start_location || '',
@@ -421,8 +432,8 @@ export function TripsPage({ action }) {
   const resetForm = () => {
     setFormData({
       vehicle_id: '',
-      driver_id: '',
-      manager_id: user?.id || '',
+      driver_username: '',
+      manager_username: user?.username || '',
       start_time: '',
       end_time: '',
       start_location: '',
@@ -455,8 +466,8 @@ export function TripsPage({ action }) {
   const fetchDrivers = async () => {
     try {
       const response = await api.get(`/drivers/`, { headers });
-      if (response.data.data && Array.isArray(response.data.data)) {
-        setDrivers(response.data.data);
+      if (response.data && Array.isArray(response.data)) {
+        setDrivers(response.data);
       } else {
         console.warn("API response for drivers was not an array:", response.data);
         setDrivers([]);
@@ -518,6 +529,7 @@ export function TripsPage({ action }) {
 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+       
         <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative animate-slideDown">
           <button
             className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
@@ -535,8 +547,8 @@ export function TripsPage({ action }) {
               <span className="ml-2 text-gray-900">{trip.trip_id}</span>
             </div>
             <div>
-              <span className="font-semibold text-gray-700">Driver ID:</span>
-              <span className="ml-2 text-gray-900">{trip.driver_id}</span>
+              <span className="font-semibold text-gray-700">Driver Username:</span>
+              <span className="ml-2 text-gray-900">{trip.driver_username}</span>
             </div>
             <div>
               <span className="font-semibold text-gray-700">Vehicle:</span>
@@ -689,7 +701,7 @@ export function TripsPage({ action }) {
       {/* Trips List */}
       <div className="space-y-6">
         {filteredTrips.map((trip, index) => {
-          const driver = drivers.find(d => d.driver_id === trip.driver_id);
+          const driver = drivers.find(d => d.username === trip.driver_username);
           const vehicle = vehicles.find(v => v.vehicle_id === trip.vehicle_id);
 
           return (
@@ -743,7 +755,7 @@ export function TripsPage({ action }) {
                       <User size={18} className="mr-3 text-orange-500" />
                       <div>
                         <p className="font-medium text-gray-900">
-                          {driver ? `${driver.first_name} ${driver.last_name}` : 'Unknown Driver'}
+                          {driver ? `${driver.username}` : 'Unknown Driver'}
                         </p>
                         <p className="text-xs text-gray-500">Driver</p>
                       </div>
