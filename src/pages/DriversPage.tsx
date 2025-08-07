@@ -6,6 +6,7 @@ import { useSearchParams } from 'react-router-dom';
 
 
 export interface Driver {
+  mail: any;
   driver_id: number;
   username: string;
   manager_id: number | null;
@@ -228,6 +229,7 @@ export function DriversPage({ action }) {
     const id = user?.id || 0;
     try {
       const res = await api.get(`/drivers/manager/${username}`);
+      console.log(`Fetched drivers under manager : ${username} `, res.data);
       setDrivers(res.data);
     } catch (err) {
       console.error('Failed to fetch drivers:', err);
@@ -246,7 +248,8 @@ export function DriversPage({ action }) {
   // Filtered drivers based on search
   const filteredDrivers = drivers.filter(driver =>
     (`${driver.first_name} ${driver.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      driver.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      driver.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      driver.mail.toLowerCase().includes(searchTerm.toLowerCase()) ||
       driver.license_number.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -260,7 +263,8 @@ export function DriversPage({ action }) {
         'mobile_number',
         'license_number',
         'password',
-        'manager_id'
+        'manager_id',
+        'manager_username'
       ];
 
       const missingFields = requiredFields.filter(field => !driverData[field]);
@@ -278,8 +282,8 @@ export function DriversPage({ action }) {
         password: '[REDACTED]'
       });
 
-      const response = await api.post('/auth/signup', driverData);
-      console.log('Server response:', response.data);
+      const response = await api.post('/auth/register', driverData);
+      console.log('Server response for driver registration:', response.data);
       await fetchDrivers();
       return response.data;
     } catch (err: any) {
@@ -333,7 +337,10 @@ export function DriversPage({ action }) {
         // Add new driver
         await addDriver({
           ...formData,
-          manager_id: user?.id
+          username: formData.email.split('@')[0],
+          role: "driver",
+          manager_id: user?.id,
+          manager_username: user?.username,
         });
       }
 
@@ -491,7 +498,7 @@ export function DriversPage({ action }) {
               <div className="space-y-4">
                 <div className="flex items-center text-sm text-gray-600 p-3 bg-gray-50 rounded-xl">
                   <Mail size={16} className="mr-3 text-orange-500" />
-                  <span className="font-medium">{driver.email}</span>
+                  <span className="font-medium">{driver.mail}</span>
                 </div>
                 <div className="flex items-center text-sm text-gray-600 p-3 bg-gray-50 rounded-xl">
                   <Phone size={16} className="mr-3 text-orange-500" />

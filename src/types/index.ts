@@ -88,7 +88,7 @@ export interface Vehicle {
 }
 
 export interface Driver {
-  mail: ReactNode;
+  mail: string;
   id: number;
   manager_id: number | null;
   first_name: string;
